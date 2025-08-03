@@ -4,8 +4,6 @@ set -euo pipefail
 # --- Configuration ---
 NAMESPACE="headscale"
 PROVISIONER_URL="https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml"
-# This is a placeholder. The script will replace it with the actual external IP.
-PLACEHOLDER_URL="http://placeholder.local"
 
 # --- Helper Functions ---
 info() {
@@ -34,7 +32,7 @@ info "Ensuring namespace '$NAMESPACE' exists..."
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
 # 3. Define the Kubernetes manifest using a here-document
-info "Applying Headscale manifest..."
+info "Applying Headscale manifest for debugging..."
 cat <<EOF | kubectl apply -n "$NAMESPACE" -f -
 ---
 apiVersion: v1
@@ -128,23 +126,12 @@ spec:
         - name: headscale
           image: headscale/headscale:v0.25.0
           imagePullPolicy: IfNotPresent
+          # --- DEBUG COMMAND ---
+          # We are overriding the default command to keep the container alive for inspection.
           command:
-            - "headscale"
+            - "sleep"
           args:
-            - "serve"
-            - "--config"
-            - "/data/etc/config.yaml"
-          env:
-            # Environment variables will override the values in the config file.
-            - name: HEADSCALE_SERVER_URL
-              value: "${PLACEHOLDER_URL}"
-            - name: HEADSCALE_IP_PREFIXES
-              value: "100.64.0.0/10, fd7a:115c:a1e0::/48"
-          ports:
-            - name: http
-              containerPort: 8080
-            - name: metrics
-              containerPort: 9090
+            - "3600"
           volumeMounts:
             - name: data
               mountPath: /data
@@ -155,37 +142,8 @@ spec:
 EOF
 
 info "Manifest applied."
+info "Waiting for debug container to be ready..."
+kubectl rollout status deployment/headscale -n "$NAMESPACE" --timeout=2m
 
-# 4. Wait for the initial deployment to be ready
-info "Waiting for Headscale deployment to complete..."
-kubectl rollout status deployment/headscale -n "$NAMESPACE" --timeout=5m
-
-# 5. Get the External IP
-info "Waiting for External IP..."
-EXTERNAL_IP=""
-for i in {1..60}; do
-    EXTERNAL_IP=$(kubectl get svc headscale -n "$NAMESPACE" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-    if [[ -n "$EXTERNAL_IP" ]]; then
-        break
-    fi
-    info "Still waiting for External IP... ($i/60)"
-    sleep 5
-done
-
-if [[ -z "$EXTERNAL_IP" ]]; then
-    error "Failed to get External IP after 5 minutes."
-fi
-
-SERVER_URL="http://${EXTERNAL_IP}:8080"
-info "External IP found: $EXTERNAL_IP"
-info "Final Server URL: $SERVER_URL"
-
-# 6. Update the deployment with the correct Server URL and trigger a new rollout
-info "Updating deployment with the final Server URL..."
-kubectl set env deployment/headscale -n "$NAMESPACE" "HEADSCALE_SERVER_URL=${SERVER_URL}"
-
-info "Waiting for the final rollout to complete..."
-kubectl rollout status deployment/headscale -n "$NAMESPACE" --timeout=5m
-
-info "✅ Deployment successful!"
-info "Your Headscale server is running at: ${SERVER_URL}"
+info "✅ Debug container is running."
+info "Please proceed with the investigation steps."
