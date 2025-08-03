@@ -103,7 +103,7 @@ spec:
         - name: headscale
           image: headscale/headscale:v0.25.0
           imagePullPolicy: IfNotPresent
-          # The default command is `headscale serve`
+          command: ["headscale", "serve"]
           env:
             - name: HEADSCALE_CONFIG_PATH
               value: "/data/etc/config.yaml"
