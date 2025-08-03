@@ -76,11 +76,12 @@ tolerations: []
 affinity: {}
 
 persistence:
-  enabled: true
-  accessModes:
-    - ReadWriteOnce
-  size: 1Gi
-  # storageClassName: ""
+  main:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+    # storageClassName: ""
 
 headscale:
   config:
