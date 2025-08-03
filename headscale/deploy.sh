@@ -87,18 +87,26 @@ spec:
         app: headscale
     spec:
       serviceAccountName: headscale
-      containers:
-        - name: headscale
-          image: headscale/headscale:v0.25.0
-          imagePullPolicy: IfNotPresent
+      initContainers:
+        - name: init-config
+          image: alpine:3.18
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -e
-              mkdir -p /etc/headscale
-              touch /etc/headscale/config.yaml
-              exec headscale serve
+              mkdir -p /data/etc
+              touch /data/etc/config.yaml
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: headscale
+          image: headscale/headscale:v0.25.0
+          imagePullPolicy: IfNotPresent
+          # The default command is `headscale serve`
           env:
+            - name: HEADSCALE_CONFIG_PATH
+              value: "/data/etc/config.yaml"
             - name: HEADSCALE_SERVER_URL
               value: "${PLACEHOLDER_URL}"
             - name: HEADSCALE_LISTEN_ADDR
