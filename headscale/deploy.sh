@@ -87,6 +87,10 @@ spec:
         app: headscale
     spec:
       serviceAccountName: headscale
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
       initContainers:
         - name: init-config
           image: alpine:3.18
