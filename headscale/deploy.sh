@@ -87,6 +87,10 @@ spec:
         app: headscale
     spec:
       serviceAccountName: headscale
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
       initContainers:
         - name: init-permissions
           image: alpine:3.18
@@ -124,11 +128,6 @@ spec:
         - name: headscale
           image: headscale/headscale:v0.25.0
           imagePullPolicy: IfNotPresent
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
           command: ["headscale", "serve"]
           env:
             - name: HEADSCALE_CONFIG
@@ -147,6 +146,8 @@ spec:
               value: "/data/private.key"
             - name: HEADSCALE_NOISE_PRIVATE_KEY_PATH
               value: "/data/noise_private.key"
+            - name: HEADSCALE_IP_PREFIXES
+              value: "100.64.0.0/10, fd7a:115c:a1e0::/48"
           ports:
             - name: http
               containerPort: 8080
