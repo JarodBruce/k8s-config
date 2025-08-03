@@ -37,9 +37,17 @@ securityContext: {}
   # runAsUser: 1000
 
 service:
-  type: LoadBalancer
-  port: 8080
-  grpcPort: 50443
+  main:
+    type: LoadBalancer
+    ports:
+      http:
+        port: 8080
+        targetPort: 8080
+        protocol: TCP
+      grpc:
+        port: 50443
+        targetPort: 50443
+        protocol: TCP
 
 ingress:
   enabled: false
