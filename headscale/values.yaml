@@ -89,7 +89,7 @@ persistence:
     enabled: true
     accessMode: ReadWriteOnce
     size: 1Gi
-    # storageClassName: ""
+    storageClassName: "local-path"
 
 headscale:
   config:
