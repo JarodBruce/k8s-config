@@ -91,8 +91,13 @@ spec:
         - name: headscale
           image: headscale/headscale:v0.25.0
           imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
           args:
-            - serve
+            - |
+              set -e
+              mkdir -p /etc/headscale
+              touch /etc/headscale/config.yaml
+              exec headscale serve
           env:
             - name: HEADSCALE_SERVER_URL
               value: "${PLACEHOLDER_URL}"
@@ -104,6 +109,10 @@ spec:
               value: "sqlite3"
             - name: HEADSCALE_DATABASE_SQLITE_PATH
               value: "/data/db.sqlite"
+            - name: HEADSCALE_PRIVATE_KEY_PATH
+              value: "/data/private.key"
+            - name: HEADSCALE_NOISE_PRIVATE_KEY_PATH
+              value: "/data/noise_private.key"
           ports:
             - name: http
               containerPort: 8080
