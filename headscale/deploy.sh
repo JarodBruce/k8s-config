@@ -96,9 +96,20 @@ spec:
               set -e
               mkdir -p /data/etc
               cat <<'EOF' > /data/etc/config.yaml
-              # This minimal config is required by Headscale v0.25.0 to start.
+              # This config file contains the minimum required keys for Headscale v0.25.0 to pass startup validation.
+              # The actual values are overridden by environment variables at runtime.
+              server_url: ${PLACEHOLDER_URL}
+              listen_addr: "0.0.0.0:8080"
+              metrics_listen_addr: "0.0.0.0:9090"
+              private_key_path: /data/private.key
               noise:
                 private_key_path: /data/noise_private.key
+              database:
+                type: sqlite3
+                sqlite:
+                  path: /data/db.sqlite
+              ip_prefixes:
+                - 100.64.0.0/10
               EOF
           volumeMounts:
             - name: data
