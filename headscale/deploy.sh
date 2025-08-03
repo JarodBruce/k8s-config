@@ -102,12 +102,10 @@ spec:
               set -e
               echo "Initializing volume permissions..."
               mkdir -p /data/etc
+              # The config file is still useful for some base settings and to ensure the directory structure is in place.
               cat <<'EOF' > /data/etc/config.yaml
-              # This config file contains the minimum required keys for Headscale v0.25.0 to pass startup validation.
-              # The actual values are overridden by environment variables at runtime.
-              server_url: ${PLACEHOLDER_URL}
-              listen_addr: "0.0.0.0:8080"
-              metrics_listen_addr: "0.0.0.0:9090"
+              # This config file is used to ensure required paths exist.
+              # Most critical settings are overridden by environment variables for clarity and security.
               private_key_path: /data/private.key
               noise:
                 private_key_path: /data/noise_private.key
@@ -115,8 +113,6 @@ spec:
                 type: sqlite3
                 sqlite:
                   path: /data/db.sqlite
-              ip_prefixes:
-                - 100.64.0.0/10
               EOF
               # Change ownership to the non-root user that the main container will use
               chown -R 1000:1000 /data
