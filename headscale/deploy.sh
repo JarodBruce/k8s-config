@@ -95,7 +95,11 @@ spec:
             - |
               set -e
               mkdir -p /data/etc
-              touch /data/etc/config.yaml
+              cat <<'EOF' > /data/etc/config.yaml
+              # This minimal config is required by Headscale v0.25.0 to start.
+              noise:
+                private_key_path: /data/noise_private.key
+              EOF
           volumeMounts:
             - name: data
               mountPath: /data
