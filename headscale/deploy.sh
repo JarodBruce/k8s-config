@@ -100,9 +100,25 @@ spec:
           args:
             - |
               set -e
-              echo "Initializing volume permissions..."
-              # Ensure the target directory exists and has the correct ownership
+              echo "Initializing volume permissions and config..."
               mkdir -p /data/etc
+              cat <<'EOF' > /data/etc/config.yaml
+              # This config file contains all required keys for Headscale to pass startup validation.
+              # The actual values are overridden by environment variables at runtime.
+              server_url: http://placeholder.local:8080
+              listen_addr: 0.0.0.0:8080
+              metrics_listen_addr: 0.0.0.0:9090
+              private_key_path: /data/private.key
+              noise:
+                private_key_path: /data/noise_private.key
+              database:
+                type: sqlite3
+                sqlite:
+                  path: /data/db.sqlite
+              ip_prefixes:
+                - 100.64.0.0/10
+              EOF
+              # Change ownership to the non-root user that the main container will use
               chown -R 1000:1000 /data
               echo "Permissions set."
           volumeMounts:
@@ -112,23 +128,16 @@ spec:
         - name: headscale
           image: headscale/headscale:v0.25.0
           imagePullPolicy: IfNotPresent
-          command: ["headscale", "serve"]
+          command:
+            - "headscale"
+          args:
+            - "serve"
+            - "--config"
+            - "/data/etc/config.yaml"
           env:
-            # We no longer need a config file, but we keep the data volume for keys and the database.
+            # Environment variables will override the values in the config file.
             - name: HEADSCALE_SERVER_URL
               value: "${PLACEHOLDER_URL}"
-            - name: HEADSCALE_LISTEN_ADDR
-              value: "0.0.0.0:8080"
-            - name: HEADSCALE_METRICS_LISTEN_ADDR
-              value: "0.0.0.0:9090"
-            - name: HEADSCALE_DATABASE_TYPE
-              value: "sqlite3"
-            - name: HEADSCALE_DATABASE_SQLITE_PATH
-              value: "/data/db.sqlite"
-            - name: HEADSCALE_PRIVATE_KEY_PATH
-              value: "/data/private.key"
-            - name: HEADSCALE_NOISE_PRIVATE_KEY_PATH
-              value: "/data/noise_private.key"
             - name: HEADSCALE_IP_PREFIXES
               value: "100.64.0.0/10, fd7a:115c:a1e0::/48"
           ports:
