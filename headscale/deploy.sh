@@ -101,20 +101,8 @@ spec:
             - |
               set -e
               echo "Initializing volume permissions..."
+              # Ensure the target directory exists and has the correct ownership
               mkdir -p /data/etc
-              # The config file is still useful for some base settings and to ensure the directory structure is in place.
-              cat <<'EOF' > /data/etc/config.yaml
-              # This config file is used to ensure required paths exist.
-              # Most critical settings are overridden by environment variables for clarity and security.
-              private_key_path: /data/private.key
-              noise:
-                private_key_path: /data/noise_private.key
-              database:
-                type: sqlite3
-                sqlite:
-                  path: /data/db.sqlite
-              EOF
-              # Change ownership to the non-root user that the main container will use
               chown -R 1000:1000 /data
               echo "Permissions set."
           volumeMounts:
@@ -126,8 +114,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["headscale", "serve"]
           env:
-            - name: HEADSCALE_CONFIG
-              value: "/data/etc/config.yaml"
+            # We no longer need a config file, but we keep the data volume for keys and the database.
             - name: HEADSCALE_SERVER_URL
               value: "${PLACEHOLDER_URL}"
             - name: HEADSCALE_LISTEN_ADDR
