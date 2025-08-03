@@ -105,7 +105,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["headscale", "serve"]
           env:
-            - name: HEADSCALE_CONFIG_PATH
+            - name: HEADSCALE_CONFIG
               value: "/data/etc/config.yaml"
             - name: HEADSCALE_SERVER_URL
               value: "${PLACEHOLDER_URL}"
