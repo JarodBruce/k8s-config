@@ -87,17 +87,16 @@ spec:
         app: headscale
     spec:
       serviceAccountName: headscale
-      securityContext:
-        fsGroup: 1000
-        runAsUser: 1000
-        runAsGroup: 1000
       initContainers:
-        - name: init-config
+        - name: init-permissions
           image: alpine:3.18
+          securityContext:
+            runAsUser: 0 # Run as root
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -e
+              echo "Initializing volume permissions..."
               mkdir -p /data/etc
               cat <<'EOF' > /data/etc/config.yaml
               # This config file contains the minimum required keys for Headscale v0.25.0 to pass startup validation.
@@ -115,6 +114,9 @@ spec:
               ip_prefixes:
                 - 100.64.0.0/10
               EOF
+              # Change ownership to the non-root user that the main container will use
+              chown -R 1000:1000 /data
+              echo "Permissions set."
           volumeMounts:
             - name: data
               mountPath: /data
@@ -122,6 +124,11 @@ spec:
         - name: headscale
           image: headscale/headscale:v0.25.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           command: ["headscale", "serve"]
           env:
             - name: HEADSCALE_CONFIG
