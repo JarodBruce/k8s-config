@@ -78,8 +78,7 @@ affinity: {}
 persistence:
   main:
     enabled: true
-    accessModes:
-      - ReadWriteOnce
+    accessMode: ReadWriteOnce
     size: 1Gi
     # storageClassName: ""
 
