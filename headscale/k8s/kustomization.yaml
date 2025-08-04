@@ -1,0 +1,11 @@
+# This file is used by Kustomize to manage the Kubernetes resources.
+# It lists all the YAML files that should be applied to the cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - 00-namespace.yaml
+  - 01-service-account.yaml
+  - 02-pvc.yaml
+  - 03-service.yaml
+  - 04-configmap.yaml
+  - 05-deployment.yaml

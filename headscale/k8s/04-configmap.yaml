@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: headscale-config
+  namespace: headscale
+data:
+  config.yaml: |
+    # This config file contains all required keys for Headscale v0.25.0 to pass startup validation.
+    server_url: "http://placeholder.local:8080"
+    listen_addr: 0.0.0.0:8080
+    metrics_listen_addr: 0.0.0.0:9090
+    private_key_path: /data/private.key
+    noise:
+      private_key_path: /data/noise_private.key
+    database:
+      type: sqlite3
+      sqlite:
+        path: /data/db.sqlite
+    ip_prefixes:
+      - 100.64.0.0/10
+      - fd7a:115c:a1e0::/48

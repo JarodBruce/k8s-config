@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headscale
+  namespace: headscale
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: headscale
+  template:
+    metadata:
+      labels:
+        app: headscale
+    spec:
+      serviceAccountName: headscale
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
+      initContainers:
+        - name: init-config
+          image: alpine:3.18
+          securityContext:
+            runAsUser: 0 # Run as root to chown
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              echo "Copying config and setting permissions..."
+              mkdir -p /data/etc
+              cp /config-ro/config.yaml /data/etc/config.yaml
+              chown -R 1000:1000 /data
+              echo "Initialization complete."
+          volumeMounts:
+            - name: config-ro
+              mountPath: /config-ro
+            - name: data
+              mountPath: /data
+      containers:
+        - name: headscale
+          image: headscale/headscale:v0.25.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - "headscale"
+          args:
+            - "serve"
+            - "--config"
+            - "/data/etc/config.yaml"
+          env:
+            # This will be updated by the deploy script once the external IP is known.
+            - name: HEADSCALE_SERVER_URL
+              value: "http://placeholder.local:8080"
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: metrics
+              containerPort: 9090
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: config-ro
+          configMap:
+            name: headscale-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: headscale-main

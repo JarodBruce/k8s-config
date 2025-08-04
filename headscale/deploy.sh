@@ -4,8 +4,7 @@ set -euo pipefail
 # --- Configuration ---
 NAMESPACE="headscale"
 PROVISIONER_URL="https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml"
-# This is a placeholder. The script will replace it with the actual external IP.
-PLACEHOLDER_URL="http://placeholder.local:8080"
+
 
 # --- Helper Functions ---
 info() {
@@ -33,126 +32,10 @@ fi
 info "Ensuring namespace '$NAMESPACE' exists..."
 kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
-# 3. Define the Kubernetes manifest using a here-document
-info "Applying Headscale manifest..."
-cat <<EOF | kubectl apply -n "$NAMESPACE" -f -
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: headscale
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: headscale-main
-spec:
-  accessModes:
-    - "ReadWriteOnce"
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: "1Gi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: headscale
-spec:
-  type: LoadBalancer
-  ports:
-    - name: http
-      port: 8080
-      targetPort: 8080
-      protocol: TCP
-    - name: metrics
-      port: 9090
-      targetPort: 9090
-      protocol: TCP
-  selector:
-    app: headscale
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: headscale
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: headscale
-  template:
-    metadata:
-      labels:
-        app: headscale
-    spec:
-      serviceAccountName: headscale
-      securityContext:
-        fsGroup: 1000
-        runAsUser: 1000
-        runAsGroup: 1000
-      initContainers:
-        - name: init-permissions
-          image: alpine:3.18
-          securityContext:
-            runAsUser: 0 # Run as root
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              set -e
-              echo "Initializing volume permissions and config..."
-              mkdir -p /data/etc
-              cat <<'EOF' > /data/etc/config.yaml
-              # This config file contains all required keys for Headscale v0.25.0 to pass startup validation.
-              server_url: ${PLACEHOLDER_URL}
-              listen_addr: 0.0.0.0:8080
-              metrics_listen_addr: 0.0.0.0:9090
-              private_key_path: /data/private.key
-              noise:
-                private_key_path: /data/noise_private.key
-              database:
-                type: sqlite3
-                sqlite:
-                  path: /data/db.sqlite
-              ip_prefixes:
-                - 100.64.0.0/10
-                - fd7a:115c:a1e0::/48
-              EOF
-              # Change ownership to the non-root user that the main container will use
-              chown -R 1000:1000 /data
-              echo "Permissions set."
-          volumeMounts:
-            - name: data
-              mountPath: /data
-      containers:
-        - name: headscale
-          image: headscale/headscale:v0.25.0
-          imagePullPolicy: IfNotPresent
-          command:
-            - "headscale"
-          args:
-            - "serve"
-            - "--config"
-            - "/data/etc/config.yaml"
-          env:
-            # This will override the server_url in the config file once the external IP is known.
-            - name: HEADSCALE_SERVER_URL
-              value: "${PLACEHOLDER_URL}"
-          ports:
-            - name: http
-              containerPort: 8080
-            - name: metrics
-              containerPort: 9090
-          volumeMounts:
-            - name: data
-              mountPath: /data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: headscale-main
-EOF
+# 3. Apply the Kubernetes manifests from the 'k8s' directory
+info "Applying Headscale manifests from 'k8s' directory..."
+kubectl apply -k "k8s/"
 
-info "Manifest applied."
 
 # 4. Wait for the initial deployment to be ready
 info "Waiting for Headscale deployment to complete..."
