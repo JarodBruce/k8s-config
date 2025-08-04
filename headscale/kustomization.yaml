@@ -19,7 +19,7 @@ patches:
         path: /spec/template/spec/containers/0/env/-
         value:
           name: HEADSCALE_SERVER_URL
-          value: http://headscale.example.com
+          value: http://headscale.jarodbruce.f5.si
       - op: add
         path: /spec/template/spec/containers/0/env/-
         value:
@@ -50,7 +50,7 @@ patches:
         value:
           ingressClassName: nginx
           rules:
-            - host: headscale.example.com
+            - host: headscale.jarodbruce.f5.si
               http:
                 paths:
                   - path: /

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-tunnel
+  namespace: default
+  labels:
+    app: cloudflare-tunnel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflare-tunnel
+  template:
+    metadata:
+      labels:
+        app: cloudflare-tunnel
+    spec:
+      containers:
+      - name: cloudflared
+        image: cloudflare/cloudflared:latest
+        command:
+        - /usr/local/bin/cloudflared
+        - tunnel
+        - --no-autoupdate
+        - run
+        args:
+        - --token
+        - "$(CLOUDFLARE_TOKEN)"
+        env:
+        - name: CLOUDFLARE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: cloudflare-tunnel-secret
+              key: CLOUDFLARE_TOKEN
