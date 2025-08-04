@@ -5,7 +5,6 @@ metadata:
   namespace: headscale
 data:
   config.yaml: |
-    # This config file contains all required keys for Headscale v0.25.0 to pass startup validation.
     server_url: "http://placeholder.local:8080"
     listen_addr: 0.0.0.0:8080
     metrics_listen_addr: 0.0.0.0:9090
