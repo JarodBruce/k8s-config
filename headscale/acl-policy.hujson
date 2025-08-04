@@ -1,0 +1,26 @@
+{
+  "groups": {
+    "group:admin": ["my-username"],
+  },
+
+  // Allow all connections.
+  // Match absolutely everything.
+  // Comment this section out if you want to define specific restrictions.
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["*"],
+      "dst": ["*:*"]
+    }
+  ],
+
+  // Allow group:admin to ssh to everything...
+  "ssh": [
+    {
+      "action": "accept",
+      "src": ["group:admin"],
+      "dst": ["*"],
+      "users": ["root", "my-username"]
+    }
+  ]
+}

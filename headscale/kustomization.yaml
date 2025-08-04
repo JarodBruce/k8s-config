@@ -1,0 +1,82 @@
+# kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - github.com/jefferyb/k8s-headscale/base
+  - https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/baremetal/deploy.yaml
+
+configMapGenerator:
+  - name: headscale-acl-policy
+    behavior: merge
+    files:
+      - acl-policy.hujson=acl-policy.hujson
+
+patches:
+  # Configure Headscale Deployment
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: HEADSCALE_SERVER_URL
+          value: http://headscale.example.com
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: HEADSCALE_DNS_BASE_DOMAIN
+          value: base.example.com
+      - op: replace
+        path: /spec/template/spec/volumes/2
+        value: 
+          name: headscale-volume
+          hostPath:
+            path: /opt/volumes/headscale/data
+    target:
+      kind: Deployment
+      name: headscale
+
+  # Delete the default PersistentVolumeClaim
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: headscale-volume-pvc
+
+  # Configure the Ingress
+  - patch: |-
+      - op: replace
+        path: /spec
+        value:
+          ingressClassName: nginx
+          rules:
+            - host: headscale.example.com
+              http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: headscale
+                        port:
+                          name: http
+      - op: add
+        path: /metadata/annotations
+        value:
+          nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    target:
+      kind: Ingress
+      name: headscale
+
+  # Set the static IP for the Ingress Controller Service
+  - patch: |-
+      - op: replace
+        path: /spec/type
+        value: LoadBalancer
+      - op: add
+        path: /spec/loadBalancerIP
+        value: 192.168.1.220
+    target:
+      kind: Service
+      name: ingress-nginx-controller
+      namespace: ingress-nginx

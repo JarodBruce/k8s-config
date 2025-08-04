@@ -1,7 +1,0 @@
-# このコマンドブロックをコピーして実行してください
-POD_NAME=$(kubectl get pods -n headscale -o jsonpath='{.items[0].metadata.name}')
-echo "--- Config File Content ---"
-kubectl exec -n headscale $POD_NAME -- cat /data/etc/config.yaml
-echo ""
-echo "--- Environment Variables ---"
-kubectl exec -n headscale $POD_NAME -- env

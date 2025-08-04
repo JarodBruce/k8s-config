@@ -95,8 +95,14 @@
 ## プロジェクトの目的
 HeadscaleというVPNサーバを完全化形で動くように頑張る！
 k8sを３node体制でホスティングしているのでその腕で動作させて欲しい
+`-w`や-`-wathch`のオプションは使用禁止です。
+`https://github.com/juanfont/headscale`
+`https://github.com/jefferyb/k8s-headscale`
+を参考に頑張ってください
 
-`deploy.sh`を参考にして欲しい
-ついでに`headscale.yaml`とかに分解して欲しい
-あと`deploy.sh`を見直ししてほしい
-完全に起動するわけじゃないから
+```kubectl get pod -A
+NAMESPACE     NAME                                           READY   STATUS    RESTARTS   AGE
+default       headscale-5b95fc65f6-sgmrr                     0/1     Pending   0          9m26s
+```
+このpodをrunningにできるよう頑張ってください
+
