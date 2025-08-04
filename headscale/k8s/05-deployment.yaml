@@ -41,12 +41,13 @@ spec:
         - name: headscale
           image: headscale/headscale:v0.25.0
           imagePullPolicy: IfNotPresent
-          command:
-            - "headscale"
+          command: ["/bin/sh", "-c"]
           args:
-            - "serve"
-            - "--config"
-            - "/data/etc/config.yaml"
+            - |
+              echo "--- Start of config.yaml ---"
+              cat /data/etc/config.yaml
+              echo "--- End of config.yaml ---"
+              headscale serve --config /data/etc/config.yaml
           env:
             # This will be updated by the deploy script once the external IP is known.
             - name: HEADSCALE_SERVER_URL
