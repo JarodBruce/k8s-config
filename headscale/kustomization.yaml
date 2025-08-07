@@ -71,6 +71,14 @@ patches:
       - op: add
         path: /spec/loadBalancerIP
         value: 192.168.1.220
+      - op: replace
+        path: /spec/ports
+        value:
+          - name: http
+            port: 6192
+            protocol: TCP
+            targetPort: http
+            appProtocol: http
     target:
       kind: Service
       name: ingress-nginx-controller

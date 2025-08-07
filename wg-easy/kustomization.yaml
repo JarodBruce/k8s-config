@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wg-easy
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+configMapGenerator:
+  - name: wg-easy-config
+    envs:
+      - .env
+generatorOptions:
+  disableNameSuffixHash: true
+replacements:
+  - source:
+      kind: ConfigMap
+      name: wg-easy-config
+      fieldPath: data.WG_UI_PORT
+    targets:
+      - select:
+          kind: Service
+          name: wg-easy-svc
+        fieldPaths:
+          - spec.ports.[name=wg-ui].port
+      - select:
+          kind: Deployment
+          name: wg-easy
+        fieldPaths:
+          - spec.template.spec.containers.[name=wg-easy].ports.[name=wg-ui].containerPort
+  - source:
+      kind: ConfigMap
+      name: wg-easy-config
+      fieldPath: data.WG_PORT
+    targets:
+      - select:
+          kind: Service
+          name: wg-easy-svc
+        fieldPaths:
+          - spec.ports.[name=wg-vpn].port
+      - select:
+          kind: Deployment
+          name: wg-easy
+        fieldPaths:
+          - spec.template.spec.containers.[name=wg-easy].ports.[name=wg-vpn].containerPort
